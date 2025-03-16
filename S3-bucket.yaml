@@ -3,7 +3,7 @@ Resources:
   MyS3Bucket:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: 'S3-github'
+      BucketName: 's3-github'
       AccessControl: Private
       VersioningConfiguration:
         Status: Enabled
