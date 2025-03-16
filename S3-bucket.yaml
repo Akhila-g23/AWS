@@ -10,4 +10,4 @@ Resources:
 Outputs:
   BucketName:
     Description: "Name of the S3 bucket"
-    Value: !Ref MyS3Bucket
+    Value: !Ref s3-bucket-ak
