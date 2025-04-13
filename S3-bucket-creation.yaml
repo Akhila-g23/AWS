@@ -1,13 +1,61 @@
-AWSTemplateFormatVersion: '2010-09-09'
-Resources:
-  MyS3Bucket:
-    Type: 'AWS::S3::Bucket'
-    Properties:
-      BucketName: 's3-akhi-stack-github'
-      AccessControl: Private
-      VersioningConfiguration:
-        Status: Enabled
-Outputs:
-  BucketName:
-    Description: "Name of the S3 bucket"
-    Value: !Ref MyS3Bucket
+pipeline {
+    agent any
+
+    environment {
+        AWS_REGION = 'us-east-1'  // Set your AWS region here
+        STACK_NAME = 'my-s3-stack' // Stack name, change it as needed
+        TEMPLATE_FILE = '3-bucket-creation.yaml'  // Path to your CloudFormation template
+    }
+
+    stages {
+        stage('Deploy CloudFormation Stack') {
+            steps {
+                script {
+                    // Create the CloudFormation stack using the template
+                    sh """
+                    aws cloudformation create-stack --stack-name ${STACK_NAME} \
+                    --template-body file://${TEMPLATE_FILE} \
+                    --region ${AWS_REGION} \
+                    --capabilities CAPABILITY_IAM
+                    """
+                }
+            }
+        }
+
+        stage('Wait for Stack Creation') {
+            steps {
+                script {
+                    // Wait until the stack creation is complete
+                    sh """
+                    aws cloudformation wait stack-create-complete --stack-name ${STACK_NAME} --region ${AWS_REGION}
+                    """
+                }
+            }
+        }
+
+        stage('Get Bucket Name') {
+            steps {
+                script {
+                    // Get the stack outputs (including the S3 bucket name)
+                    def result = sh(script: """
+                    aws cloudformation describe-stacks --stack-name ${STACK_NAME} --region ${AWS_REGION} --query 'Stacks[0].Outputs' --output json
+                    """, returnStdout: true).trim()
+
+                    // Parse the output and retrieve the S3 bucket name
+                    def outputs = readJSON text: result
+                    def bucketName = outputs.find { it.OutputKey == 'BucketName' }?.OutputValue
+                    echo "S3 Bucket Name: ${bucketName}"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'CloudFormation stack created successfully.'
+        }
+        failure {
+            echo 'Stack creation failed.'
+        }
+    }
+}
