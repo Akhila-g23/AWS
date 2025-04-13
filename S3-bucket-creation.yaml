@@ -4,7 +4,7 @@ pipeline {
     environment {
         AWS_REGION = 'us-east-1'  // Set your AWS region here
         STACK_NAME = 'my-s3-stack' // Stack name, change it as needed
-        TEMPLATE_FILE = '3-bucket-creation.yaml'  // Path to your CloudFormation template
+        TEMPLATE_FILE = 'S3-bucket.yaml'  // Path to your CloudFormation template
     }
 
     stages {
